@@ -1,16 +1,16 @@
 // models/supabaseModel.js
-import supabase from "@supabase/supabase-js";
+// import supabase from "@supabase/supabase-js";
 import { config} from "dotenv";
 import { config as dotConfig } from "dotenv";
 import fs from "fs";  
 import PDFDocument from "pdfkit";
 import xlsx from "xlsx";
-
+import SupabaseClient from "@supabase/supabase-js";
 dotConfig();
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+// const supabaseUrl = process.env.SUPABASE_URL;
+// const supabaseKey = process.env.SUPABASE_KEY;
+// const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
 config();
 
