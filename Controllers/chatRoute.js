@@ -1,9 +1,11 @@
 //routes/chatRoute
 import express from "express";
-import  chatBot  from "../Services/chatController.js";
-
+import  newCarChatBot  from "../Services/newCarChatController.js";
+import usedCarChatBot from "../Services/usedCarChatController.js";
 const router = express.Router();
 router.use(express.json());
-router.post('/chat',chatBot);
+router.post('/newcar/chat',newCarChatBot);
+router.post('/usedcar/chat',usedCarChatBot);
+
 
 export default router;

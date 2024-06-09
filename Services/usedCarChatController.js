@@ -1,0 +1,131 @@
+import { CSVLoader } from "langchain/document_loaders/fs/csv";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import supabaseClient from "../supabaseClient.js";
+import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { config as dotConfig } from "dotenv";
+import supabase from "@supabase/supabase-js";
+import { ChatOpenAI } from "@langchain/openai";
+// import {OpenAIApi} from 'openai';
+import OpenAI from "openai";
+
+dotConfig();
+var gptarray;
+let responseSent = false;
+const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY,});
+
+function processJson(jsonObj) {
+  let result = '';
+
+  for (let key in jsonObj) {
+    if (jsonObj.hasOwnProperty(key) && key !== 'flag') {
+      result += `${key}: ${jsonObj[key]}\n`;
+    }
+  }
+
+  return result.trim();  // Remove the trailing newline character
+}
+
+const getUserContent = (messages) => {
+  return messages
+    .filter(message => message.role === 'user')
+    .map(message => message.content)
+    .join(' ');
+};
+
+export default async function usedCarChatBot(req,res){
+    try{
+        let query=req.body.query;
+        console.log("Query: ",query);
+        gptarray=req.body.gptarray;
+        console.log("Length of gpt Array: ",gptarray.length);
+        const userMessages=getUserContent(gptarray);
+        console.log("User Messages: ", userMessages);
+
+        const chatCompletion = await openai.chat.completions.create({
+            model: "gpt-4-turbo",
+            messages: [{
+              "role":"system",
+              "content":`You are smart, helpful and intelligent assisstant with the knowledge of new  automobiles in Pakistan. You will return response in json format.
+              You will be given the query of the user. You must follow the steps below:
+              Step 1: Analyze all the queries of the user so far that is ${userMessages}.
+              Step 1.1: Extract key features for example Price 30 lacs, title like suzuki alto, Body Type SUV etc. Find all features like title,	Price,	Body Type, Displacement (engine size), Fuel Type, Transmission , Mileage, Seating Capacity, Top Speed,	Dimensions (Length x Width x Height)	Ground Clearance,	Horse Power, Torque,	Boot Space,	Kerb Weight, Fuel Tank Capacity, Tyre Size,	Battery Capacity,	Range, Charging Time. 
+              You have to analyze the query and extract these key features if found. You may not find the exact words so be smart and categorize these features intelligently. 
+              Your response must include a flag key value pair with value of 1 if minimum of 2 key features are extracted. Make sure minimun of 2 features are extracted.
+              An example of the response is: [{
+              "flag":1,
+              "Price":"30 lacs",
+              "Title": "Suzuku alto",
+              "Body Type":"Hatchback",
+              }]
+              
+              Step 1.2: If you cannot extract atleast 2 key features then ask questions related to those features. For example: "How much seating capacity are you looking for in a car?", "What is your price budget?", "What body type are you looking for like hatchback, SUV, sedan etc ?". Ask main 2 - 5 questions like these.
+              Your response must include flag. Ask questions for key features mentioned like title, price etc as shown in example. Ask questions in your own words in simple english. 
+              Ask maximum of 5 questions. Not more than that. 
+              An example of your response is:
+              [{
+                "flag":0,
+                "Questions": ["How much seating capacity are you looking for in a car?", "What is your price budget?", "What body type are you looking for like hatchback, SUV, sedan etc ?", "Do you have any specific title or brand like suzuki, toyota, honda etc in your mind?"]
+              }]
+              Make sure the user is interested in automobiles. If anyother question is asked just return that I am sorry I can only provide assisstance to your queries that are related to automobiles. If you have any queries related to new cars, I will be happy to help. Always return fla 0 in such cases.
+              `
+            }],
+            response_format: { type: "json_object" },
+          });
+
+        console.log("Response from gpt: ",chatCompletion.choices[0].message.content);
+        let responsefromgpt = JSON.parse(chatCompletion.choices[0].message.content);
+
+        console.log("responsefromgpt: ",responsefromgpt);
+        if(responsefromgpt.flag==0){
+          console.log("In if body");
+          console.log(chatCompletion.choices[0].message.content);
+          res.send(chatCompletion.choices[0].message.content);
+
+        }
+        else if(responsefromgpt.flag==1){
+          console.log("In else if body");
+          let features = processJson(responsefromgpt);
+          console.log("After processing", features);
+          console.log(chatCompletion.choices[0].message.content);
+
+          const embeddings = new OpenAIEmbeddings({
+            openAIApiKey: process.env.OPENAI_API_KEY,
+            modelName: "text-embedding-3-large",
+            dimensions: 1536,
+          });
+
+        const response = await embeddings.embedQuery(features);
+        const result = await supabaseClient.rpc('match_documents6', {query_embedding:response,match_count:15});
+        console.log("Result: ",result);
+        var info = [];
+        for (let i = 0; i < result.data.length; i++) {
+          //console.log("Printing");
+          //console.log(resultOne.data[i].content);
+          info.push(result.data[i].content);
+          }
+          //console.log("After loop");
+      gptarray[gptarray.length-1].content=gptarray[gptarray.length-1].content+` Relevant information is : ${info}`;
+      
+      //console.log("GPT Array: ",gptarray);
+
+      const chatCompletion1 = await openai.chat.completions.create({
+          model: "gpt-4-turbo",
+          messages: gptarray,
+          response_format: { type: "json_object" },
+        });
+        console.log(chatCompletion1.choices[0]);
+        res.send(chatCompletion1.choices[0].message.content);
+
+        }
+        else{
+          console.log("in else");
+        }
+        
+
+    }
+    catch(err){
+        console.log("Error in chatBot: ",err);
+        res.send(err);
+    }
+}

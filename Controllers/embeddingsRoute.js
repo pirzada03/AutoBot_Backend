@@ -1,7 +1,9 @@
 import express from "express";
-import embeddings, {vectorStore} from "../Services/embeddingsController.js";
+import newcarembeddings from "../Services/newCarEmbeddingsController.js";
+import usedcarembeddings from "../Services/usedCarEmbeddings.js";
 const router = express.Router();
 console.log("In embeddingsRoute.js");
-router.get('/',embeddings);
+router.get('/newcar',newcarembeddings);
+router.get('/usedcar',usedcarembeddings);
 
 export default router;
