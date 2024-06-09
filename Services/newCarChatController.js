@@ -35,8 +35,8 @@ const getUserContent = (messages) => {
 
 export default async function newCarChatBot(req,res){
     try{
-        let query=req.body.query;
-        console.log("Query: ",query);
+        // let query=req.body.query;
+        // console.log("Query: ",query);
         gptarray=req.body.gptarray;
         console.log("Length of gpt Array: ",gptarray.length);
         const userMessages=getUserContent(gptarray);
@@ -84,7 +84,9 @@ export default async function newCarChatBot(req,res){
                 "Title": "Suzuki Alto",
                 "Body Type": "Hatchback"
               }
-              Step 1.2: If you cannot extract at least 2 key features other than comparison, ask questions related to those features that are price budget, seating capacity, body type, transmission, usage, fuel type, displacement or engine size, top speed, fuel mileage, incase of electronic (battery capacity, range, charging time). For example:
+              Step 1.2: If you cannot extract at least 2 key features, ask questions related to those features that are price budget, seating capacity, body type, transmission, usage, fuel type, displacement or engine size, top speed, fuel mileage, incase of electronic (battery capacity, range, charging time).
+              Ask questions in all cases other than the case where user asks for comparison.
+              For example:
 
               "How much seating capacity are you looking for in a car?"
               "What is your price budget?"
