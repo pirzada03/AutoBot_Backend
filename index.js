@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/",async (req,res)=>{
-  return res.send("HELLO WORLD")
+  return res.send("HELLO WORLD");
 })
 
 app.use("/",router);

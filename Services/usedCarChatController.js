@@ -33,10 +33,10 @@ const getUserContent = (messages) => {
     .join(' ');
 };
 
-export default async function usedCarChatBot(req,res){
+export default async function newCarChatBot(req,res){
     try{
-        let query=req.body.query;
-        console.log("Query: ",query);
+        // let query=req.body.query;
+        // console.log("Query: ",query);
         gptarray=req.body.gptarray;
         console.log("Length of gpt Array: ",gptarray.length);
         const userMessages=getUserContent(gptarray);
@@ -46,28 +46,72 @@ export default async function usedCarChatBot(req,res){
             model: "gpt-4-turbo",
             messages: [{
               "role":"system",
-              "content":`You are smart, helpful and intelligent assisstant with the knowledge of new  automobiles in Pakistan. You will return response in json format.
-              You will be given the query of the user. You must follow the steps below:
+              "content":`You are a smart, helpful, and intelligent assistant with knowledge of used automobiles in Pakistan. You will return responses in JSON format. You will be given the query of the user. You must follow the steps below:
+
               Step 1: Analyze all the queries of the user so far that is ${userMessages}.
-              Step 1.1: Extract key features for example Price 30 lacs, title like suzuki alto, Body Type SUV etc. Find all features like title,	Price,	Body Type, Displacement (engine size), Fuel Type, Transmission , Mileage, Seating Capacity, Top Speed,	Dimensions (Length x Width x Height)	Ground Clearance,	Horse Power, Torque,	Boot Space,	Kerb Weight, Fuel Tank Capacity, Tyre Size,	Battery Capacity,	Range, Charging Time. 
-              You have to analyze the query and extract these key features if found. You may not find the exact words so be smart and categorize these features intelligently. 
-              Your response must include a flag key value pair with value of 1 if minimum of 2 key features are extracted. Make sure minimun of 2 features are extracted.
-              An example of the response is: [{
-              "flag":1,
-              "Price":"30 lacs",
-              "Title": "Suzuku alto",
-              "Body Type":"Hatchback",
-              }]
+              Keep history of user queries in mind.
               
-              Step 1.2: If you cannot extract atleast 2 key features then ask questions related to those features. For example: "How much seating capacity are you looking for in a car?", "What is your price budget?", "What body type are you looking for like hatchback, SUV, sedan etc ?". Ask main 2 - 5 questions like these.
-              Your response must include flag. Ask questions for key features mentioned like title, price etc as shown in example. Ask questions in your own words in simple english. 
-              Ask maximum of 5 questions. Not more than that. 
-              An example of your response is:
-              [{
-                "flag":0,
-                "Questions": ["How much seating capacity are you looking for in a car?", "What is your price budget?", "What body type are you looking for like hatchback, SUV, sedan etc ?", "Do you have any specific title or brand like suzuki, toyota, honda etc in your mind?"]
-              }]
-              Make sure the user is interested in automobiles. If anyother question is asked just return that I am sorry I can only provide assisstance to your queries that are related to automobiles. If you have any queries related to new cars, I will be happy to help. Always return fla 0 in such cases.
+              Step 1.1: Extract key features intelligently especially when asked to compare such as:
+              Price (e.g., 30 lacs)
+              Title (e.g., Suzuki Alto)
+              Location (e.g., Karachi)
+              Model Year (e.g., 2018)
+              Mileage (e.g., 50,000 km)
+              Fuel Type (e.g., Petrol)
+              Transmission (e.g., Automatic)
+              Registered In (e.g., Lahore)
+              Color (e.g., White)
+              Assembly (Local or Imported)
+              Engine Capacity (e.g., 1000 cc)
+              Body Type (e.g., SUV)
+              Car Features (e.g., Sunroof, ABS)
+              You have to analyze the query and extract these key features if found. You may not find the exact words, so be smart and categorize these features intelligently. Your response must include a flag key-value pair with a value of 1 if a minimum of 5 key features are extracted.
+              
+              Example response if minimum 5 features are extracted:
+              {
+                "flag": 1,
+                "Price": "30 lacs",
+                "Title": "Suzuki Alto",
+                "Location": "Karachi",
+                "model":"2022",
+                "Mileage":"70000 km",
+                "Color":"White",
+              }
+
+              Step 1.2: If you cannot extract at least 5 key features, ask questions related to those features such as price budget, location, model year, mileage, fuel type, transmission, registered in, color, assembly, engine capacity, body type, car features.
+                Ask questions in all cases other than the case where the user asks for a comparison.
+
+                Example response if less than 5 features are extracted:
+                {
+                    "flag": 0,
+                    "Questions": [
+                      "What is your price budget?",
+                      "Where are you located?",
+                      "What model year are you looking for?",
+                      "What is the mileage limit for the car?",
+                      "Do you have a preference for fuel type?",
+                      "What type of transmission do you prefer?",
+                      "Which city do you want the car to be registered in?",
+                      "What color of the car are you interested in?",
+                      "Are you looking for a locally assembled or imported car?",
+                      "What engine capacity are you looking for?",
+                      "What body type are you interested in like hatchback, SUV, sedan, etc.?",
+                      "Are there any specific features you are looking for in a car?"
+                    ]
+                  }
+                  You are not bound to follow this example. You can ask questions related to price budget, location, model year, mileage, fuel type, transmission, registered in, color, assembly, engine capacity, body type, car features. Be intelligent, smart, and creative in asking questions so you can shortlist a car through features and user requirements.
+
+                    Step 1.3: If the user asks any question unrelated to automobiles or greetings, respond with an apology message.
+                    Example response if unrelated question is asked:
+                    {
+                        "flag": 0,
+                        "assistant": "I am sorry, I can only provide assistance to your queries that are related to automobiles. If you have any queries related to used cars, I will be happy to help."
+                      }
+
+                      Step 1.4: Make sure if the user asks for suggestions or help in buying a car, ask questions about the features they are looking for and include flag with value 0 in response.
+                        Step 1.5: If the user asks about a specific car then just extract features like in step 1.1.
+                        Step 1.6: If the user just greets then just simply greet back and ask how you can help in providing assistance related to used cars in Pakistan with flag 0 in response.
+
               `
             }],
             response_format: { type: "json_object" },
@@ -96,7 +140,7 @@ export default async function usedCarChatBot(req,res){
           });
 
         const response = await embeddings.embedQuery(features);
-        const result = await supabaseClient.rpc('match_documents6', {query_embedding:response,match_count:15});
+        const result = await supabaseClient.rpc('match_documents7', {query_embedding:response,match_count:50});
         console.log("Result: ",result);
         var info = [];
         for (let i = 0; i < result.data.length; i++) {
@@ -107,19 +151,19 @@ export default async function usedCarChatBot(req,res){
           //console.log("After loop");
       gptarray[gptarray.length-1].content=gptarray[gptarray.length-1].content+` Relevant information is : ${info}`;
       
-      //console.log("GPT Array: ",gptarray);
+      console.log("GPT Array: ",gptarray);
 
       const chatCompletion1 = await openai.chat.completions.create({
           model: "gpt-4-turbo",
           messages: gptarray,
-          response_format: { type: "json_object" },
         });
         console.log(chatCompletion1.choices[0]);
-        res.send(chatCompletion1.choices[0].message.content);
+       res.send(chatCompletion1.choices[0].message.content);
 
         }
         else{
           console.log("in else");
+          res.send("There might be some error! Please refresh and try again.")
         }
         
 
