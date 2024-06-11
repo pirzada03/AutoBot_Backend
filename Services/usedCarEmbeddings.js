@@ -15,7 +15,7 @@ export default async function usedcarembeddings(req, res) {
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_KEY;
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
-        const loader = new CSVLoader("old_car_data.csv");
+        const loader = new CSVLoader("old_car_scrapping.csv");
         console.log("Loader of used car details: ", loader);
 
         const docs = await loader.load();
