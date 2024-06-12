@@ -12,41 +12,42 @@ import OpenAI from "openai";
 dotConfig();
 var gptarray;
 let responseSent = false;
-const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY,});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 function processJson(jsonObj) {
-  let result = '';
+  let result = "";
 
   for (let key in jsonObj) {
-    if (jsonObj.hasOwnProperty(key) && key !== 'flag') {
+    if (jsonObj.hasOwnProperty(key) && key !== "flag") {
       result += `${key}: ${jsonObj[key]}\n`;
     }
   }
 
-  return result.trim();  // Remove the trailing newline character
+  return result.trim(); // Remove the trailing newline character
 }
 
 const getUserContent = (messages) => {
   return messages
-    .filter(message => message.role === 'user')
-    .map(message => message.content)
-    .join(' ');
+    .filter((message) => message.role === "user")
+    .map((message) => message.content)
+    .join(" ");
 };
 
-export default async function newCarChatBot(req,res){
-    try{
-        // let query=req.body.query;
-        // console.log("Query: ",query);
-        gptarray=req.body.gptarray;
-        console.log("Length of gpt Array: ",gptarray.length);
-        const userMessages=getUserContent(gptarray);
-        console.log("User Messages: ", userMessages);
+export default async function newCarChatBot(req, res) {
+  try {
+    // let query=req.body.query;
+    // console.log("Query: ",query);
+    gptarray = req.body.gptarray;
+    console.log("Length of gpt Array: ", gptarray.length);
+    const userMessages = getUserContent(gptarray);
+    console.log("User Messages: ", userMessages);
 
-        const chatCompletion = await openai.chat.completions.create({
-            model: "gpt-4-turbo",
-            messages: [{
-              "role":"system",
-              "content":`You are a smart, helpful, and intelligent assistant with knowledge of used automobiles in Pakistan. You will return responses in JSON format. You will be given the query of the user. You must follow the steps below:
+    const chatCompletion = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "system",
+          content: `You are a smart, helpful, and intelligent assistant with knowledge of used automobiles in Pakistan. You will return responses in JSON format. You will be given the query of the user. You must follow the steps below:
 
               Step 1: Analyze all the queries of the user so far that is ${userMessages}.
               Keep history of user queries in mind.
@@ -112,64 +113,67 @@ export default async function newCarChatBot(req,res){
                         Step 1.5: If the user asks about a specific car then just extract features like in step 1.1.
                         Step 1.6: If the user just greets then just simply greet back and ask how you can help in providing assistance related to used cars in Pakistan with flag 0 in response.
 
-              `
-            }],
-            response_format: { type: "json_object" },
-          });
+              `,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
 
-        console.log("Response from gpt: ",chatCompletion.choices[0].message.content);
-        let responsefromgpt = JSON.parse(chatCompletion.choices[0].message.content);
+    console.log(
+      "Response from gpt: ",
+      chatCompletion.choices[0].message.content
+    );
+    let responsefromgpt = JSON.parse(chatCompletion.choices[0].message.content);
 
-        console.log("responsefromgpt: ",responsefromgpt);
-        if(responsefromgpt.flag==0){
-          console.log("In if body");
-          console.log(chatCompletion.choices[0].message.content);
-          res.send(chatCompletion.choices[0].message.content);
+    console.log("responsefromgpt: ", responsefromgpt);
+    if (responsefromgpt.flag == 0) {
+      console.log("In if body");
+      console.log(chatCompletion.choices[0].message.content);
+      res.send(chatCompletion.choices[0].message.content);
+    } else if (responsefromgpt.flag == 1) {
+      console.log("In else if body");
+      let features = processJson(responsefromgpt);
+      console.log("After processing", features);
+      console.log(chatCompletion.choices[0].message.content);
 
-        }
-        else if(responsefromgpt.flag==1){
-          console.log("In else if body");
-          let features = processJson(responsefromgpt);
-          console.log("After processing", features);
-          console.log(chatCompletion.choices[0].message.content);
+      const embeddings = new OpenAIEmbeddings({
+        openAIApiKey: process.env.OPENAI_API_KEY,
+        modelName: "text-embedding-3-large",
+        dimensions: 1536,
+      });
 
-          const embeddings = new OpenAIEmbeddings({
-            openAIApiKey: process.env.OPENAI_API_KEY,
-            modelName: "text-embedding-3-large",
-            dimensions: 1536,
-          });
+      const response = await embeddings.embedQuery(features);
+      const result = await supabaseClient.rpc("match_documents7", {
+        query_embedding: response,
+        match_count: 50,
+      });
+      console.log("Result: ", result);
+      var info = [];
+      for (let i = 0; i < result.data.length; i++) {
+        //console.log("Printing");
+        //console.log(resultOne.data[i].content);
+        info.push(result.data[i].content);
+      }
+      //console.log("After loop");
+      gptarray[gptarray.length - 1].content =
+        gptarray[gptarray.length - 1].content +
+        ` Relevant information is : ${info}`;
 
-        const response = await embeddings.embedQuery(features);
-        const result = await supabaseClient.rpc('match_documents7', {query_embedding:response,match_count:50});
-        console.log("Result: ",result);
-        var info = [];
-        for (let i = 0; i < result.data.length; i++) {
-          //console.log("Printing");
-          //console.log(resultOne.data[i].content);
-          info.push(result.data[i].content);
-          }
-          //console.log("After loop");
-      gptarray[gptarray.length-1].content=gptarray[gptarray.length-1].content+` Relevant information is : ${info}`;
-      
-      console.log("GPT Array: ",gptarray);
+      console.log("GPT Array: ", gptarray);
 
       const chatCompletion1 = await openai.chat.completions.create({
-          model: "gpt-4-turbo",
-          messages: gptarray,
-        });
-        console.log(chatCompletion1.choices[0]);
-       res.send(chatCompletion1.choices[0].message.content);
-
-        }
-        else{
-          console.log("in else");
-          res.send("There might be some error! Please refresh and try again.")
-        }
-        
-
+        model: "gpt-4-turbo",
+        messages: gptarray,
+        response_format: { type: "json_object" },
+      });
+      console.log(chatCompletion1.choices[0]);
+      res.send(chatCompletion1.choices[0].message.content);
+    } else {
+      console.log("in else");
+      res.send("There might be some error! Please refresh and try again.");
     }
-    catch(err){
-        console.log("Error in chatBot: ",err);
-        res.send(err);
-    }
+  } catch (err) {
+    console.log("Error in chatBot: ", err);
+    res.send(err);
+  }
 }
