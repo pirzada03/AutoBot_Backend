@@ -22,7 +22,7 @@ export default async function newcarembeddings(req,res) {
         console.log("Loader of new car details: ",loader);
 
         const docs = await loader.load();
-        // console.log("Docs: ",docs);
+       console.log("Docs: ",docs);
 
         let textDocs=[];
         let metaDocs=[];
@@ -30,7 +30,6 @@ export default async function newcarembeddings(req,res) {
        let titles = [];
        let prices = [];
        let bodyTypes = [];
-       let dimensions = [];
        let groundClearances = [];
        let displacements = [];
        let transmissions = [];
@@ -39,7 +38,6 @@ export default async function newcarembeddings(req,res) {
        let bootSpaces = [];
        let kerbWeights = [];
        let fuelTypes = [];
-       let mileages = [];
        let fuelTankCapacities = [];
        let seatingCapacities = [];
        let topSpeeds = [];
@@ -60,14 +58,11 @@ export default async function newcarembeddings(req,res) {
                    case 'title':
                        titles.push(value);
                        break;
-                   case 'Price':
+                   case 'price':
                        prices.push(value);
                        break;
                    case 'Body Type':
                        bodyTypes.push(value);
-                       break;
-                   case 'Dimensions (Length x Width x Height)':
-                       dimensions.push(value);
                        break;
                    case 'Ground Clearance':
                        groundClearances.push(value);
@@ -75,7 +70,7 @@ export default async function newcarembeddings(req,res) {
                    case 'Displacement':
                        displacements.push(value);
                        break;
-                   case 'Transmission':
+                   case 'Transmission Type':
                        transmissions.push(value);
                        break;
                    case 'Horse Power':
@@ -90,11 +85,8 @@ export default async function newcarembeddings(req,res) {
                    case 'Kerb Weight':
                        kerbWeights.push(value);
                        break;
-                   case 'Fuel Type':
+                   case 'Engine Type':
                        fuelTypes.push(value);
-                       break;
-                   case 'Mileage':
-                       mileages.push(value);
                        break;
                    case 'Fuel Tank Capacity':
                        fuelTankCapacities.push(value);
@@ -102,7 +94,7 @@ export default async function newcarembeddings(req,res) {
                    case 'Seating Capacity':
                        seatingCapacities.push(value);
                        break;
-                   case 'Top Speed':
+                   case 'Max Speed':
                        topSpeeds.push(value);
                        break;
                    case 'Tyre Size':
@@ -121,28 +113,26 @@ export default async function newcarembeddings(req,res) {
            });
        });
 
-      //  console.log("Titles: ", titles);
-      //  console.log("Prices: ", prices);
-      //  console.log("Body Types: ", bodyTypes);
-      //  console.log("Dimensions: ", dimensions);
-      //  console.log("Ground Clearances: ", groundClearances);
-      //  console.log("Displacements: ", displacements);
-      //  console.log("Transmissions: ", transmissions);
-      //  console.log("Horse Powers: ", horsePowers);
-      //  console.log("Torques: ", torques);
-      //  console.log("Boot Spaces: ", bootSpaces);
-      //  console.log("Kerb Weights: ", kerbWeights);
-      //  console.log("Fuel Types: ", fuelTypes);
-      //  console.log("Mileages: ", mileages);
-      //  console.log("Fuel Tank Capacities: ", fuelTankCapacities);
-      //  console.log("Seating Capacities: ", seatingCapacities);
-      //  console.log("Top Speeds: ", topSpeeds);
-      //  console.log("Tyre Sizes: ", tyreSizes);
-      //  console.log("Battery Capacities: ", batteryCapacities);
-      //  console.log("Ranges: ", ranges);
-      //  console.log("Charging Times: ", chargingTimes);
-        // console.log("Text Docs: ",textDocs);
-        // console.log("Meta Docs: ",metaDocs);
+    //    console.log("Titles: ", titles);
+    //    console.log("Prices: ", prices);
+    //    console.log("Body Types: ", bodyTypes);
+    //    console.log("Ground Clearances: ", groundClearances);
+    //    console.log("Displacements: ", displacements);
+    //    console.log("Transmissions: ", transmissions);
+    //    console.log("Horse Powers: ", horsePowers);
+    //    console.log("Torques: ", torques);
+    //    console.log("Boot Spaces: ", bootSpaces);
+    //    console.log("Kerb Weights: ", kerbWeights);
+    //    console.log("Fuel Types: ", fuelTypes);
+    //    console.log("Fuel Tank Capacities: ", fuelTankCapacities);
+    //    console.log("Seating Capacities: ", seatingCapacities);
+    //    console.log("Top Speeds: ", topSpeeds);
+    //    console.log("Tyre Sizes: ", tyreSizes);
+    //    console.log("Battery Capacities: ", batteryCapacities);
+    //    console.log("Ranges: ", ranges);
+    //    console.log("Charging Times: ", chargingTimes);
+    //     console.log("Text Docs: ",textDocs);
+    //     console.log("Meta Docs: ",metaDocs);
        console.log("Before embeddings");
         vectorStore = await SupabaseVectorStore.fromTexts(
             textDocs,
@@ -168,7 +158,6 @@ export default async function newcarembeddings(req,res) {
                     Title: titles[i],
                     Price: prices[i],
                     Body_Type: bodyTypes[i],
-                    Dimensions: dimensions[i],
                     Ground_Clearance: groundClearances[i],
                     Displacement: displacements[i],
                     Transmission: transmissions[i],
@@ -177,7 +166,6 @@ export default async function newcarembeddings(req,res) {
                     Boot_Space: bootSpaces[i],
                     Kerb_Weight: kerbWeights[i],
                     Fuel_Type: fuelTypes[i],
-                    Mileage: mileages[i],
                     Fuel_Tank_Capacity: fuelTankCapacities[i],
                     Seating_Capacity: seatingCapacities[i],
                     Top_Speed: topSpeeds[i],
