@@ -132,7 +132,7 @@ export default async function partsAndAccessoriesChatBot(req,res){
         for (let i = 0; i < result.data.length; i++) {
           //console.log("Printing");
           //console.log(resultOne.data[i].content);
-          info.push(result.data[i].content);
+          info.push(result.data[i].content + " " + result.data[i].rating + " " + result.data[i].numberoforders + " " + result.data[i].numberofratings);
           }
           //console.log("After loop");
       gptarray[gptarray.length-1].content=gptarray[gptarray.length-1].content+` Relevant information is : ${info}`;

@@ -16,7 +16,7 @@ export default async function partsandaccessoriesembeddings(req, res) {
         const supabaseKey = process.env.SUPABASE_KEY;
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
         
-        const loader = new CSVLoader("interior.csv", { encoding: "utf-8" });  // Use the path of the uploaded file
+        const loader = new CSVLoader("Updated_CSV_DataFrame.csv", { encoding: "utf-8" });  // Use the path of the uploaded file
         console.log("Loader of parts and accessories details: ", loader);
 
         const docs = await loader.load();
@@ -24,41 +24,69 @@ export default async function partsandaccessoriesembeddings(req, res) {
         let textDocs = [];
         let metaDocs = [];
 
-        let titles = [];
-        let originalPrices = [];
-        let discountedPrices = [];
         let descriptions = [];
         let types = [];
+        let names = [];
+        let categories = [];
+        let brands = [];
+        let prices = [];
+        let quantities = [];
+        let compatibilities = [];
+        let images = [];
+        let subcategories = [];
+        let numberoforders = [];
+        let ratings = [];
+        let numberofratings = [];
 
         docs.forEach((doc, index) => {
-            // Determine the type based on the index
-            const type = index < 46 ? 'interior' : 'exterior';
-
-            // Include the type in the text content
-            const textContentWithType = doc.pageContent + `\nType: ${type}`;
-            textDocs.push(textContentWithType);
+            textDocs.push(doc.pageContent);
             metaDocs.push(doc.metadata);
 
             const columns = doc.pageContent.split('\n');
             columns.forEach((column) => {
                 const [key, value] = column.split(': ').map(item => item.trim());
                 switch (key) {
-                    case 'Title':
-                        titles.push(value);
+                    case 'name':
+                        names.push(value);
                         break;
-                    case 'OriginalPrice':
-                        originalPrices.push(value);
-                        break;
-                    case 'DiscountedPrice':
-                        discountedPrices.push(value);
-                        break;
-                    case 'Description':
+                    case 'description':
                         descriptions.push(value);
+                        break;
+                    case 'category':
+                        categories.push(value);
+                        break;
+                    case 'brand':
+                        brands.push(value);
+                        break;
+                    case 'price':
+                        prices.push(parseFloat(value));
+                        break;
+                    case 'quantity':
+                        quantities.push(parseInt(value));
+                        break;
+                    case 'images':
+                        images.push(value.split(',').map(image => image.trim()));
+                        break;
+                    case 'compatibility':
+                        compatibilities.push(value.split(',').map(comp => comp.trim()));
+                        break;
+                    case 'type':
+                        types.push(value);
+                        break;
+                    case 'subcategory':
+                        subcategories.push(value);
+                        break;
+                    case 'numberoforders':
+                        numberoforders.push(parseInt(value));
+                        break;
+                    case 'rating':
+                        ratings.push(parseFloat(value));
+                        break;
+                    case 'numberofratings':
+                        numberofratings.push(parseInt(value));
                         break;
                 }
             });
-
-            types.push(type);
         });
 
         console.log("Before embeddings");
@@ -82,13 +110,21 @@ export default async function partsandaccessoriesembeddings(req, res) {
             await supabaseClient
                 .from('documents2')
                 .update({
-                    title: titles[i],
-                    originalprice: originalPrices[i],
-                    discountedprice: discountedPrices[i],
+                    name: names[i],
                     description: descriptions[i],
+                    category: categories[i],
+                    brand: brands[i],
+                    price: prices[i],
+                    quantity: quantities[i],
+                    compatibility: compatibilities[i],
+                    images: images[i],
+                    subcategory: subcategories[i],
+                    numberoforders: numberoforders[i],
+                    rating: ratings[i],
+                    numberofratings: numberofratings[i],
                     type: types[i],
                 })
-                .eq('id', i+1);
+                .eq('id', i + 1);
         }
         console.log("Data updated in Supabase");
         res.status(200).json({ message: 'Embeddings created', vectorStore });

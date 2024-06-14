@@ -106,7 +106,7 @@ export default async function newcarembeddings(req,res) {
                    case 'Range':
                        ranges.push(value);
                        break;
-                   case 'Charging Time':
+                   case 'Charging time':
                        chargingTimes.push(value);
                        break;
                }
